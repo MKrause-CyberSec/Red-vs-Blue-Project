@@ -148,9 +148,9 @@ After exploiting the target, analyzing the logs will shows me:
 
 - While going through the solution file, please note that the IP addresses here need to be replaced your machine's IP addresses. 
 
-# Step 1: Double-click the Google Chrome icon on the Windows host's desktop to launch Kibana. If it doesn't load as the default page, navigate to http://192.168.1.105:5601.
+Step 1: Double-click the Google Chrome icon on the Windows host's desktop to launch Kibana. If it doesn't load as the default page, navigate to http://192.168.1.105:5601.
 
-# Step 2: Created a Kibana dashboard using the pre-built visualizations for the following existing reports.
+Step 2: Created a Kibana dashboard using the pre-built visualizations for the following existing reports.
 - `HTTP status codes for the top queries [Packetbeat] ECS`
 - `Top 10 HTTP requests [Packetbeat] ECS`
 - `Network Traffic Between Hosts [Packetbeat Flows] ECS`
