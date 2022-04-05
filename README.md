@@ -134,24 +134,23 @@ Students can read the file, once located, with `cat`.
 | Step 6: Upload a PHP reverse shell payload.                      |
 | Step 7: Find and capture the flag.                               |
 
-## Solution Guide: Incident Analysis with Kibana
 
-### Instructions: Investigating the Incident
+## Part 2: Incident Analysis with Kibana
 
-Even though you already know what you did to exploit the target, analyzing the logs is still valuable. It will teach you:
+### Investigating the Incident
+
+After exploiting the target, analyzing the logs will shows me:
 - What your attack looks like from a defender's perspective.
 
 - How stealthy or detectable your tactics are.
 
-- Which kinds of alarms and alerts SOC and IR professionals can set to spot attacks like yours while they occur, rather than after.
+- Which kinds of alarms and alerts SOC and IR professionals can set to spot attacks like the ones I conducted while they occur, rather than after.
 
 - While going through the solution file, please note that the IP addresses here need to be replaced your machine's IP addresses. 
 
-Double-click the Google Chrome icon on the Windows host's desktop to launch Kibana. If it doesn't load as the default page, navigate to http://192.168.1.105:5601.
+# Step 1: Double-click the Google Chrome icon on the Windows host's desktop to launch Kibana. If it doesn't load as the default page, navigate to http://192.168.1.105:5601.
 
-Start by creating a Kibana dashboard using the pre-built visualizations. Navigate to your home page, then scroll down to **Visualize and Explore Data** then **Dashboard**.
-
-Click on **Create dashboard** in the upper left hand side. On the new page click on **Add an existing** to add the following existing reports:
+# Step 2: Created a Kibana dashboard using the pre-built visualizations for the following existing reports.
 - `HTTP status codes for the top queries [Packetbeat] ECS`
 - `Top 10 HTTP requests [Packetbeat] ECS`
 - `Network Traffic Between Hosts [Packetbeat Flows] ECS`
@@ -161,21 +160,20 @@ Click on **Create dashboard** in the upper left hand side. On the new page click
 - `Errors vs successful transactions [Packetbeat] ECS`
 - `HTTP Transactions [Packetbeat] ECS`
 
-Your final dashboard should look similar to:
+The final dashboard:
 
 ![](Images/Dashboard.png)
 
-Next, get familiar with running search queries in the `Discover` screen with Packetbeat.
-- On the Discover page, locate the search field.
-- Start typing `source` and notice the suggestions that come up.
-- Search for the `source.ip` of your attacking machine.
-- Use `AND` and `NOT` to further filter you search and look for communications between your attacking machine and the victim machine.
-- Other things to look for: 
+Ran the following search queries in the `Discover` screen with Packetbeat.
+- `source` 
+- Search for the `source.ip` of the attacking machine.
+- Use `AND` and `NOT` to further filter you search and look for communications between the attacking machine and the victim machine.
+- Other things to looked at: 
 	- `url`
 	- `status_code`
 	- `error_code`
 
-Some helpful searches include
+More helpful searches
 
 - `http.response.status_code : 200`
 - `url.path: /company_folders/secret_folder/`
@@ -185,54 +183,52 @@ Some helpful searches include
 
 ![](Images/Searching.png)
 
-After you create your dashboard and become familiar with the search syntax, use these tools to answer the questions below:
-
 #### 1. Identify the Offensive Traffic
 
 Identify the traffic between your machine and the web machine:
 
 
-- Staring with a few searches in the 'Discover' area, we can find some interesting interactions.
+- Starting with a few searches in the 'Discover' area, we can find some interesting interactions.
 
-- Run `source.ip: 192.168.1.90 and destination.ip: 192.168.1.105` in which the source IP is your Kali machine and your destination machine is your web server.
+- Run `source.ip: 192.168.1.90 and destination.ip: 192.168.1.105` in which the source IP is the Kali machine and the destination machine is the web server.
 
 - Run `url.path: /company_folders/secret_folder/`.
 
 When did the interaction occur?
 
-- You know when the interaction happened so we will need to change the timeline that Kibana is searching to see that time period:
+- I know when the interaction happened so I changed the timeline that Kibana is searching to see that time period:
 
 ![](Images/show-dates.png)
 
-In your dashboard, look through the different panels and use this data to look through the results and notice the following interactions:
+In the dashboard, I looked through the different panels and used the data to look through the results and notice the following interactions:
 
 What responses did the victim send back?
 
-- On our dashboard, we can see the top responses in the `HTTP status codes for the top queries [Packetbeat] ECS`
+- On the dashboard, the top responses in the `HTTP status codes for the top queries [Packetbeat] ECS`
 
 	![](Images/Status-codes.png)
 
-- We can see `401`, `301`, `207`, `404` and `200` as the top responses.
+- `401`, `301`, `207`, `404` and `200` are the top responses.
 
-- We can also see with the `HTTP Error Codes [Packetbeat] ECS` panel:
+- It is also visible with the `HTTP Error Codes [Packetbeat] ECS` panel:
 
 	![](Images/Error-code.png)
 
-What data is concerning from the Blue Team perspective?
+The following data is concerning from the Blue Team perspective?
 
-- We can see a connection spike in the `Connections over time [Packetbeat Flows] ECS`
+- There was a connection spike in the `Connections over time [Packetbeat Flows] ECS`
 
   ![](Images/Connection-spike.png)
 
-- We can also see a spike in errors in the `Errors vs successful transactions [Packetbet] ECS`
+- There is also a spike in errors in the `Errors vs successful transactions [Packetbet] ECS`
 
   ![](Images/Error-spike.png)
 
 #### 2. Find the Request for the Hidden Directory
 
-In your attack, you found a secret folder. Let's look at that interaction between these two machines.
+In the attack, I found a secret folder. I looked at that interaction between these two machines.
 
-How many requests were made to this directory? At what time and from which IP address(es)?
+There were 68,112 requests that were made to this directory? At 00:35am on 28/02/2022 from which IP address(es)?
 
 - On the dashboard you built, a look at your `Top 10 HTTP requests [Packetbeat] ECS` panel:
 
