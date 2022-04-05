@@ -139,18 +139,16 @@ Students can read the file, once located, with `cat`.
 
 ### Investigating the Incident
 
-After exploiting the target, analyzing the logs will shows me:
-- What your attack looks like from a defender's perspective.
+After exploiting the target, analyzing the logs will show me:
+- What my attack looks like from a defender's perspective.
 
-- How stealthy or detectable your tactics are.
+- How stealthy or detectable my tactics were.
 
 - Which kinds of alarms and alerts SOC and IR professionals can set to spot attacks like the ones I conducted while they occur, rather than after.
 
-- While going through the solution file, please note that the IP addresses here need to be replaced your machine's IP addresses. 
+#### Step 1: Double-click the Google Chrome icon on the Windows host's desktop to launch Kibana. If it doesn't load as the default page, navigate to http://192.168.1.105:5601.
 
-Step 1: Double-click the Google Chrome icon on the Windows host's desktop to launch Kibana. If it doesn't load as the default page, navigate to http://192.168.1.105:5601.
-
-Step 2: Created a Kibana dashboard using the pre-built visualizations for the following existing reports.
+#### Step 2: Created a Kibana dashboard using the pre-built visualizations for the following existing reports.
 - `HTTP status codes for the top queries [Packetbeat] ECS`
 - `Top 10 HTTP requests [Packetbeat] ECS`
 - `Network Traffic Between Hosts [Packetbeat Flows] ECS`
@@ -167,13 +165,13 @@ The final dashboard:
 Ran the following search queries in the `Discover` screen with Packetbeat.
 - `source` 
 - Search for the `source.ip` of the attacking machine.
-- Use `AND` and `NOT` to further filter you search and look for communications between the attacking machine and the victim machine.
+- Used `AND` and `NOT` to further filter the search and look for communications between the attacking machine and the victim machine.
 - Other things to looked at: 
 	- `url`
 	- `status_code`
 	- `error_code`
 
-More helpful searches
+More helpful searches:
 
 - `http.response.status_code : 200`
 - `url.path: /company_folders/secret_folder/`
@@ -185,24 +183,22 @@ More helpful searches
 
 #### 1. Identify the Offensive Traffic
 
-Identify the traffic between your machine and the web machine:
+Identified the traffic between the attacking machine and the web machine:
 
 
-- Starting with a few searches in the 'Discover' area, we can find some interesting interactions.
+- I was able to find some interesting interactions.
 
-- Run `source.ip: 192.168.1.90 and destination.ip: 192.168.1.105` in which the source IP is the Kali machine and the destination machine is the web server.
+- Ran `source.ip: 192.168.1.90 and destination.ip: 192.168.1.105` in which the source IP is the Kali machine and the destination machine is the web server.
 
-- Run `url.path: /company_folders/secret_folder/`.
+- Ran `url.path: /company_folders/secret_folder/`.
 
-When did the interaction occur?
-
-- I know when the interaction happened so I changed the timeline that Kibana is searching to see that time period:
+- I saw when the interaction happened so I changed the timeline that Kibana is searching to see that time period:
 
 ![](Images/show-dates.png)
 
 In the dashboard, I looked through the different panels and used the data to look through the results and notice the following interactions:
 
-What responses did the victim send back?
+The victem machine sent back the following responses:
 
 - On the dashboard, the top responses in the `HTTP status codes for the top queries [Packetbeat] ECS`
 
@@ -228,46 +224,33 @@ The following data is concerning from the Blue Team perspective?
 
 In the attack, I found a secret folder. I looked at that interaction between these two machines.
 
-There were 68,112 requests that were made to this directory? At 00:35am on 28/02/2022 from which IP address(es)?
+There were 6,197 requests that were made to this directory? At 00:35am on 26/05/2020 from 192.168..1.105.
 
-- On the dashboard you built, a look at your `Top 10 HTTP requests [Packetbeat] ECS` panel:
+- On the dashboard, the `Top 10 HTTP requests [Packetbeat] ECS` panel:
 
    ![](Images/Top-folders.png)
 
-- In this example we can see that this folder was requested `6,197` times.
-
-Which files were requested? What information did they contain?
-
+- In this example the /company_folder/secret_folder was requested `6,197` times. The folder contains webdav.
 
 - We can see in the same panel that the file `connect_to_corp_server` was requested `3` times.
 
-What kind of alarm would you set to detect this behavior in the future?
+- An alarm will need to be set that goes off if any attempt to access the directory or file is made.
 
-- We could set an alert that goes off for any machine that attempts to access this directory or file.
-
-Identify at least one way to harden the vulnerable machine that would mitigate this attack.
-
-- This directory and file should be removed from the server all together.
+- The directory and file should be removed from the server all together.
 
 #### 3. Identify the Brute Force Attack
 
-After identifying the hidden directory, you used Hydra to brute-force the target server. Answer the following questions:
+I then used Hydra to brute-force the target server.
 
-Can you identify packets specifically from Hydra?
+- You can then see the packets from hydra by using the search function `url.path: /company_folders/secret_folder/` will show you a few conversations involving this folder.
 
-- Yes, if you are using the search function `url.path: /company_folders/secret_folder/` will show you a few conversations involving this folder.
+- In the `Discovery` page, I searched for: `url.path: /company_folders/secret_folder/`.
 
-- In the `Discovery` page, search for: `url.path: /company_folders/secret_folder/`.
-
-Look through the results and notice that `Hydra` is identified under the `user_agent.original` section:
+I Looked through the results and notice that `Hydra` is identified under the `user_agent.original` section:
 
   ![](Images/Hydra-Evidence.png)
 
-How many requests were made in the brute-force attack? How many requests had the attacker made before discovering the correct password in this one? 
-
--   In the `Top 10 HTTP requests [Packetbeat] ECS` panel, we can see that the password protected `secret_folder` was _requested_ `6209` times, but the file inside that directory was only requested `3` times. So, out of `6209` requests, only `3` were successful. 
-
-   **Note:** Your results will differ.
+-   In the `Top 10 HTTP requests [Packetbeat] ECS` panel, we can see that the password protected `secret_folder` was _requested_ `6209` times, but the file inside that directory was only requested `3` times. So, out of `6209` requests, only `3` were successful.   
 
    ![](Images/secret-folder.png)
 
@@ -277,51 +260,37 @@ Take a look at the `HTTP status codes for the top queries [Packetbeat] ECS` pane
 
 - You can see on this panel the breakdown of `401 Unauthorized` status codes as opposed to `200 OK` status codes.
 
-- We can also see the spike in both traffic to the server and error codes.
+- You can also see the spike in both traffic to the server and error codes.
 
-- We can see a connection spike in the `Connections over time [Packetbeat Flows] ECS`
+- You can see a connection spike in the `Connections over time [Packetbeat Flows] ECS`
 
 	![](Images/Connection-spike.png)
 
-- We can also see a spike in errors in the `Errors vs successful transactions [Packetbet] ECS`
+- You can also see a spike in errors in the `Errors vs successful transactions [Packetbet] ECS`
 
 	![](Images/Error-spike.png)
 
 These are all results generated by the brute force attack with Hydra.
 
-What kind of alarm would you set to detect this behavior in the future and at what threshold(s)?
+- I set an alert if `401 Unauthorized` is returned from any server over a certain threshold that would weed out forgotten passwords. Start with `10` in one hour and refine from there.
 
-- We could set an alert if `401 Unauthorized` is returned from any server over a certain threshold that would weed out forgotten passwords. Start with `10` in one hour and refine from there.
+- I also created an alert if the `user_agent.original` value includes `Hydra` in the name.
 
-- We could also create an alert if the `user_agent.original` value includes `Hydra` in the name.
-
-Identify at least one way to harden the vulnerable machine that would mitigate this attack.
-
-- After the limit of 10 `401 Unauthorized` codes have been returned from a server, that server can automatically drop traffic from the offending IP address for a period of 1 hour. We could also display a lockout message and lock the page from login for a temporary period of time from that user.
+- After the limit of 10 `401 Unauthorized` codes have been returned from a server, that server can automatically drop traffic from the offending IP address for a period of 1 hour. I also displayed a lockout message and lock the page from login for a temporary period of time from that user.
 
 #### 4. Find the WebDav Connection
 
-Use your dashboard to answer the following questions:
-
-How many requests were made to this directory? 
-
-- We can again see in the `Top 10 HTTP requests [Packetbeat] ECS` panel that the webdav folder was directly connected and files inside were accessed.
+- You can again see in the `Top 10 HTTP requests [Packetbeat] ECS` panel that the webdav folder was directly connected and files inside were accessed.
 
   ![](Images/webdav.png)
 
-- We can also see it in the pie charts:
+- You can also see it in the pie charts:
 
   ![](Images/WebDav-pie.png)
 
-Which file(s) were requested?
-
 - We can see the passwd.dav file was requested as well as a file named `shell.php`
 
-What kind of alarm would you set to detect such access in the future?
-
-- We can create an alert anytime this directory is accessed by a machine _other_ than the machine that should have access.
-
-Identify at least one way to harden the vulnerable machine that would mitigate this attack.
+- I created an alert anytime this directory is accessed by a machine _other_ than the machine that should have access.
 
 - Connections to this shared folder should not be accessible from the web interface. 
 
@@ -329,24 +298,23 @@ Identify at least one way to harden the vulnerable machine that would mitigate t
 
 #### 5. Identify the Reverse Shell and meterpreter Traffic
 
-To finish off the attack, you uploaded a PHP reverse shell and started a meterpreter shell session. Answer the following questions:
-Can you identify traffic from the meterpreter session?
+To finish off the attack, I uploaded a PHP reverse shell and started a meterpreter shell session. 
 
--  First, we can see the `shell.php` file in the `webdav` directory on the `Top 10 HTTP requests [Packetbeat] ECS` panel.
+-  First, you can see the `shell.php` file in the `webdav` directory on the `Top 10 HTTP requests [Packetbeat] ECS` panel.
 
    ![](Images/webdav.png)
 
-- Remember that your meterpreter session ran over port `4444`. Port `4444` is the _default_ port used for meterpreter and the port used in all of their documentation. Because of this, many attackers forget to change this port when conducting an attack. You can construct a search query to find these packets.
+- My meterpreter session ran over port `4444`. Port `4444` is the _default_ port used for meterpreter and the port used in all of their documentation. Because of this, many attackers forget to change this port when conducting an attack. I constructed a search query to find these packets.
 
 - `source.ip: 192.168.1.105 and destination.port: 4444`
 
-What kinds of alarms would you set to detect this behavior in the future?
+I set the following alarms to detect this behavior in the future?
 
-- We can set an alert for any traffic moving over port `4444.`
+- I set an alert for any traffic moving over port `4444.`
 
-- We can set an alert for any `.php` file that is uploaded to a server.
+- I set an alert for any `.php` file that is uploaded to a server.
 
-Identify at least one way to harden the vulnerable machine that would mitigate this attack.
+One way to harden the vulnerable machine that would mitigate this attack.
 
 - Removing the ability to upload files to this directory over the web interface would take care of this issue.
 
